@@ -1,0 +1,13 @@
+# Library: sanctum
+composer require laravel/sanctum
+php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
+
+# Library: sanitizer
+composer require waavi/sanitizer ~1.0
+
+
+# Basic Command
+php artisan make:controller Api\AuthController
+
+
+

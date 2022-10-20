@@ -2,7 +2,13 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -32,10 +38,34 @@ class Handler extends ExceptionHandler
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->reportable(function (AuthenticationException $e) {
+            return response()->json([
+                'status'      => false,
+                'message'     => 'Unauthenticated.',
+                'errors'      => $e,
+                'status_code' => Response::HTTP_UNAUTHORIZED,
+            ], Response::HTTP_UNAUTHORIZED);
         });
+    }
+
+    protected function invalidJson($request, ValidationException $exception): JsonResponse
+    {
+        return new JsonResponse(['status' => false, 'message' => $exception->errors()],
+            ResponseAlias::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    protected function unauthenticated($request, AuthenticationException $exception): JsonResponse|ResponseAlias|RedirectResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status'      => false,
+                'message'     => 'Unauthenticated.',
+                'errors'      => $exception->getMessage(),
+                'status_code' => Response::HTTP_UNAUTHORIZED,
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+        return redirect()->guest(route('/'));
     }
 }
